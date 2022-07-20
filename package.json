@@ -14,7 +14,9 @@
     "prettier": "prettier --config .prettierrc \"src/**/*.ts\" --write",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
-    "migration:up": "db-migrate up"
+    "migration:up": "db-migrate up",
+    "migration:down": "db-migrate down",
+    "migration:reset": "db-migrate reset"
   },
   "repository": {
     "type": "git",

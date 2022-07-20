@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit'
 import errorMiddleware from './middleware/error.middleware'
 import config from './config'
 import db from './database'
-
+import routes from './routes'
 
 const PORT = config.port
 // create an instance server
@@ -31,7 +31,6 @@ const limiter = rateLimit({
 
 app.use(limiter)
 
-
 // test db
 db.connect().then((client) => {
   return client
@@ -48,13 +47,13 @@ db.connect().then((client) => {
     })
 })
 
+app.use('/api', routes)
 // add routing for / path
 app.get('/', (req: Request, res: Response) => {
   res.json({
     message: 'Hello World'
   })
 })
-
 
 app.get('/err', (req: Request, res: Response) => {
   throw new Error('hhhhhhhhh')
