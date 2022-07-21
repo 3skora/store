@@ -31,22 +31,6 @@ const limiter = rateLimit({
 
 app.use(limiter)
 
-// test db
-db.connect().then((client) => {
-  return client
-    .query('SELECT NOW()')
-    .then((res) => {
-      client.release()
-      console.log(res.rows[0].now)
-    })
-    .catch((err) => {
-      // Make sure to release the client before any error handling,
-      // just in case the error handling itself throws an error.
-      client.release()
-      console.log(err.stack)
-    })
-})
-
 app.use('/api', routes)
 // add routing for / path
 app.get('/', (req: Request, res: Response) => {
