@@ -69,9 +69,12 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
   try {
     const { id } = req.params
     const foundUser = await userModel.getUser(id)
-    console.log("🚀 ~ file: users.controller.ts ~ line 72 ~ updateUser ~ foundUser", foundUser)
-    const updatedValues : User = {...foundUser , ...req.body}
-    console.log("🚀 ~ file: users.controller.ts ~ line 73 ~ updateUser ~ updatedValues", updatedValues)
+    console.log('🚀 ~ file: users.controller.ts ~ line 72 ~ updateUser ~ foundUser', foundUser)
+    const updatedValues: User = { ...foundUser, ...req.body }
+    console.log(
+      '🚀 ~ file: users.controller.ts ~ line 73 ~ updateUser ~ updatedValues',
+      updatedValues
+    )
     //validate req.body first
     const updatedUser = await userModel.updateUser(id, updatedValues)
     console.log('🚀 ~ file: users.controller.ts ~ line 72 ~ updateUser ~ updatedUser', updatedUser)
@@ -93,6 +96,21 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
       status: 'success',
       message: `User ${id} deleted successfully`,
       data: deletedUser
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const login = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password } = req.params
+    const user = await userModel.login(email, password)
+    //HANDLE TOKEN HERE=====
+    res.json({
+      status: 'success',
+      message: `Logged in`,
+      data: user
     })
   } catch (error) {
     next(error)

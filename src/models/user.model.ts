@@ -1,5 +1,12 @@
+import bcrypt from 'bcrypt'
 import db from '../database'
 import User from '../types/user.type'
+import config from '../config'
+
+const hashPassword = (password: string) => {
+  const saltRounds = parseInt(config.salt as string)
+  return bcrypt.hashSync(`${password}${config.pepper}`, saltRounds)
+}
 
 //CRUD operations
 class UserModel {
@@ -24,7 +31,7 @@ class UserModel {
         u.user_name,
         u.first_name,
         u.last_name,
-        u.password
+        hashPassword(u.password)
       ])
 
       // release connection
@@ -68,7 +75,7 @@ class UserModel {
     try {
       const conn = await db.connect()
       const sql = `UPDATE ${this.table} SET password=$2 WHERE id=$1 RETURNING ${this.info},password`
-      const result = await conn.query(sql, [id, password])
+      const result = await conn.query(sql, [id, hashPassword(password)])
       conn.release()
       return result.rows[0]
     } catch (error) {
@@ -105,6 +112,29 @@ class UserModel {
   }
 
   //authenticate
+  async login(email: string, password: string): Promise<User | null> {
+    try {
+      const conn = await db.connect()
+      const sql = `SELECT password FROM ${this.table} WHERE email=$1`
+      const hashedPassword = await conn.query(sql, [email])
+      if (hashedPassword.rows.length) {
+        const isValidPassword = bcrypt.compareSync(
+          `${password}${config.pepper}`,
+          hashedPassword.rows[0]
+        )
+        if (isValidPassword) {
+          const userInfoQuery = `SELECT ${this.info} FROM ${this.table} where email=$1`
+          const userInfo = await conn.query(userInfoQuery, [email])
+          return userInfo.rows[0]
+        }
+      }
+
+      conn.release()
+      return null
+    } catch (error) {
+      throw new Error(`UNAUTHORIZED USER : ${(error as Error).message}`)
+    }
+  }
 }
 
 export default UserModel
