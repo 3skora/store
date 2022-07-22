@@ -1,8 +1,17 @@
 import { NextFunction, Request, Response } from 'express'
+import jwt from 'jsonwebtoken'
+import config from '../config'
 import UserModel from '../models/user.model'
 import User from '../types/user.type'
+import Error from '../interfaces/error.interface'
 
 const userModel = new UserModel()
+
+const handleError = (message: string, status: number, next: NextFunction) => {
+  const error: Error = new Error(message)
+  error.status = status
+  next(error)
+}
 
 export const helloUser = (req: Request, res: Response) => {
   res.json({ message: 'hello from users' })
@@ -40,13 +49,15 @@ export const getUser = async (req: Request, res: Response, next: NextFunction) =
   try {
     const { id } = req.params
     const user = await userModel.getUser(id)
-    res.json({
+    if (!user) throw new Error()
+
+    return res.json({
       status: 'success',
       message: `User ${id} retrieved successfully`,
       data: user
     })
   } catch (error) {
-    next(error)
+    handleError(`User Not Found`, 404, next)
   }
 }
 
@@ -69,15 +80,10 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
   try {
     const { id } = req.params
     const foundUser = await userModel.getUser(id)
-    console.log('🚀 ~ file: users.controller.ts ~ line 72 ~ updateUser ~ foundUser', foundUser)
     const updatedValues: User = { ...foundUser, ...req.body }
-    console.log(
-      '🚀 ~ file: users.controller.ts ~ line 73 ~ updateUser ~ updatedValues',
-      updatedValues
-    )
+
     //validate req.body first
     const updatedUser = await userModel.updateUser(id, updatedValues)
-    console.log('🚀 ~ file: users.controller.ts ~ line 72 ~ updateUser ~ updatedUser', updatedUser)
     res.json({
       status: 'success',
       message: `User ${id} updated successfully`,
@@ -104,15 +110,18 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password } = req.params
-    const user = await userModel.login(email, password)
-    //HANDLE TOKEN HERE=====
-    res.json({
+    const { email, password } = req.body
+    const userInfo = await userModel.login(email, password)
+    if (!userInfo) throw new Error(`email or password does not match`)
+    const token = jwt.sign(userInfo, config.tokenSecret as string)
+    req.headers["cookie"] = token
+    return res.json({
       status: 'success',
-      message: `Logged in`,
-      data: user
+      message: `Logged in `,
+      data: { id: (userInfo as User).id, token }
     })
   } catch (error) {
-    next(error)
+    handleError(`email or password does not match`, 401, next)
+    // return res.status(401).json((error as Error).message)
   }
 }

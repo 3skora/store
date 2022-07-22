@@ -58,13 +58,13 @@ class UserModel {
   }
 
   //get specific user
-  async getUser(id: string): Promise<User> {
+  async getUser(id: string): Promise<User | null> {
     try {
       const conn = await db.connect()
       const sql = `SELECT ${this.info} FROM ${this.table} WHERE id=$1`
       const result = await conn.query(sql, [id])
       conn.release()
-      return result.rows[0]
+      return result.rows.length ? result.rows[0] : null
     } catch (error) {
       throw new Error(`Unable to retrieve user ${id} : ${(error as Error).message}`)
     }
@@ -120,7 +120,7 @@ class UserModel {
       if (hashedPassword.rows.length) {
         const isValidPassword = bcrypt.compareSync(
           `${password}${config.pepper}`,
-          hashedPassword.rows[0]
+          hashedPassword.rows[0].password
         )
         if (isValidPassword) {
           const userInfoQuery = `SELECT ${this.info} FROM ${this.table} where email=$1`
@@ -128,11 +128,10 @@ class UserModel {
           return userInfo.rows[0]
         }
       }
-
       conn.release()
       return null
     } catch (error) {
-      throw new Error(`UNAUTHORIZED USER : ${(error as Error).message}`)
+      throw new Error(`Unable to login : ${(error as Error).message}`)
     }
   }
 }
