@@ -114,7 +114,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const userInfo = await userModel.login(email, password)
     if (!userInfo) throw new Error(`email or password does not match`)
     const token = jwt.sign(userInfo, config.tokenSecret as string)
-    req.headers["cookie"] = token
+    // req.headers.authorization = token
     return res.json({
       status: 'success',
       message: `Logged in `,
