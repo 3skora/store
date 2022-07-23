@@ -81,7 +81,7 @@ class ProductModel {
       conn.release()
       return result.rows[0]
     } catch (error) {
-      throw new Error(`Can Not UPDATE first name of Product ${p.id} : ${(error as Error).message}`)
+      throw new Error(`Can Not UPDATE Product ${p.id} : ${(error as Error).message}`)
     }
   }
 
