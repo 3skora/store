@@ -57,6 +57,19 @@ class ProductModel {
     }
   }
 
+  //get specific Product
+  async getProductByCategory(category: string): Promise<Product | null> {
+    try {
+      const conn = await db.connect()
+      const sql = `SELECT ${this.info} FROM ${this.table} WHERE category=$1`
+      const result = await conn.query(sql, [category])
+      conn.release()
+      return result.rows.length ? result.rows[0] : null
+    } catch (error) {
+      throw new Error(`Unable to retrieve Products of ${category} : ${(error as Error).message}`)
+    }
+  }
+
   //update Product
   async updateProduct(id: string, p: Product): Promise<Product> {
     try {

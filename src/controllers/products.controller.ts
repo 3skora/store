@@ -28,14 +28,20 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
 export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     //validate req.body first
-    const allProducts = await productModel.getAll()
+    const { category } = req.query
+    let allProducts
+    !category
+      ? (allProducts = await productModel.getAll())
+      : (allProducts = await productModel.getProductByCategory(category as string))
+
+    if (!allProducts) throw new Error()
     res.json({
       status: 'success',
       message: `All Products retrieved successfully`,
       data: allProducts
     })
   } catch (error) {
-    next(error)
+    handleError(`Products Not Found : No such category`, 404, next)
   }
 }
 
