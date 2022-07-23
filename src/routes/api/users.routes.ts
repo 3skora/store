@@ -5,7 +5,7 @@ import auth from '../../middleware/auth.middleware'
 const usersRoutes = Router()
 // /api/users/..
 usersRoutes.post('/login', controllers.login)
-usersRoutes.post('/', auth, controllers.createUser)
+usersRoutes.post('/', controllers.createUser)
 usersRoutes.get('/', auth, controllers.getAllUsers)
 usersRoutes.get('/:id', auth, controllers.getUser)
 usersRoutes.patch('/:id', auth, controllers.updateUser)
