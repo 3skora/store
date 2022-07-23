@@ -42,7 +42,6 @@ class OrderModel {
     try {
       const conn = await db.connect()
       const sql = `SELECT ${this.joinedInfo} FROM ${this.joinedTables}`
-      console.log('🚀 ~ file: order.model.ts ~ line 45 ~ OrderModel ~ getAll ~ sql', sql)
       const result = await conn.query(sql)
       conn.release()
       return result.rows

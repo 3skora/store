@@ -30,12 +30,12 @@ var limiter = (0, express_rate_limit_1.default)({
 app.use(limiter);
 app.use('/api', routes_1.default);
 // add routing for / path
-app.get('/', function (req, res) {
+app.get('/', function (_req, res) {
     res.json({
         message: 'Hello World'
     });
 });
-app.get('/err', function (req, res) {
+app.get('/err', function (_req, res) {
     throw new Error('hhhhhhhhh');
     // res.json({
     //   message: 'Hello World'

@@ -40,13 +40,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var database_1 = __importDefault(require("../database"));
-var ProductModel = /** @class */ (function () {
-    function ProductModel() {
-        this.table = 'products';
-        this.info = 'id,name,price,category,description';
+var OrderModel = /** @class */ (function () {
+    function OrderModel() {
+        this.table = 'orders';
+        this.info = 'id,user_id,status';
+        this.orderProductInfo = 'product_id,quantity';
+        this.joinedTables = 'orders o INNER JOIN order_product op ON o.id = op.order_id';
+        this.joinedInfo = "o.id,user_id,status,".concat(this.orderProductInfo);
     }
-    //create product
-    ProductModel.prototype.create = function (p) {
+    //create Order
+    OrderModel.prototype.create = function (o) {
         return __awaiter(this, void 0, void 0, function () {
             var conn, sql, result, error_1;
             return __generator(this, function (_a) {
@@ -58,8 +61,8 @@ var ProductModel = /** @class */ (function () {
                         ];
                     case 1:
                         conn = _a.sent();
-                        sql = "INSERT INTO ".concat(this.table, " (name,price,category,description)\n           VALUES ($1,$2,$3,$4) RETURNING ").concat(this.info);
-                        return [4 /*yield*/, conn.query(sql, [p.name, p.price, p.category, p.description])
+                        sql = "INSERT INTO ".concat(this.table, " (user_id,status)\n           VALUES ($1,$2) RETURNING ").concat(this.info);
+                        return [4 /*yield*/, conn.query(sql, [o.user_id, o.status])
                             // release connection
                         ];
                     case 2:
@@ -70,14 +73,14 @@ var ProductModel = /** @class */ (function () {
                         return [2 /*return*/, result.rows[0]];
                     case 3:
                         error_1 = _a.sent();
-                        throw new Error("Unable to create ".concat(p.name, " : ").concat(error_1.message));
+                        throw new Error("Unable to create order to user ".concat(o.user_id, " : ").concat(error_1.message));
                     case 4: return [2 /*return*/];
                 }
             });
         });
     };
-    //get all Products
-    ProductModel.prototype.getAll = function () {
+    //get all Orders
+    OrderModel.prototype.getAll = function () {
         return __awaiter(this, void 0, void 0, function () {
             var conn, sql, result, error_2;
             return __generator(this, function (_a) {
@@ -87,7 +90,7 @@ var ProductModel = /** @class */ (function () {
                         return [4 /*yield*/, database_1.default.connect()];
                     case 1:
                         conn = _a.sent();
-                        sql = "SELECT ".concat(this.info, " FROM ").concat(this.table);
+                        sql = "SELECT ".concat(this.joinedInfo, " FROM ").concat(this.joinedTables);
                         return [4 /*yield*/, conn.query(sql)];
                     case 2:
                         result = _a.sent();
@@ -95,14 +98,14 @@ var ProductModel = /** @class */ (function () {
                         return [2 /*return*/, result.rows];
                     case 3:
                         error_2 = _a.sent();
-                        throw new Error("Unable to retrieve all products : ".concat(error_2.message));
+                        throw new Error("Unable to retrieve all Orders : ".concat(error_2.message));
                     case 4: return [2 /*return*/];
                 }
             });
         });
     };
-    //get specific Product
-    ProductModel.prototype.getProduct = function (id) {
+    //get specific Order
+    OrderModel.prototype.getOrder = function (id) {
         return __awaiter(this, void 0, void 0, function () {
             var conn, sql, result, error_3;
             return __generator(this, function (_a) {
@@ -112,47 +115,59 @@ var ProductModel = /** @class */ (function () {
                         return [4 /*yield*/, database_1.default.connect()];
                     case 1:
                         conn = _a.sent();
-                        sql = "SELECT ".concat(this.info, " FROM ").concat(this.table, " WHERE id=$1");
+                        sql = "SELECT ".concat(this.joinedInfo, " FROM ").concat(this.joinedTables, " WHERE o.id=$1");
                         return [4 /*yield*/, conn.query(sql, [id])];
                     case 2:
                         result = _a.sent();
                         conn.release();
-                        return [2 /*return*/, result.rows.length ? result.rows[0] : null];
+                        return [2 /*return*/, result.rows.length ? result.rows : null];
                     case 3:
                         error_3 = _a.sent();
-                        throw new Error("Unable to retrieve Product ".concat(id, " : ").concat(error_3.message));
+                        throw new Error("Unable to retrieve Order ".concat(id, " : ").concat(error_3.message));
                     case 4: return [2 /*return*/];
                 }
             });
         });
     };
-    //get specific Product
-    ProductModel.prototype.getProductByCategory = function (category) {
+    //get all orders of a user and filter by status option
+    OrderModel.prototype.getOrdersOfUser = function (user_id, status) {
         return __awaiter(this, void 0, void 0, function () {
-            var conn, sql, result, error_4;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var conn, condition, sql, result, _a, error_4;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        _a.trys.push([0, 3, , 4]);
+                        _b.trys.push([0, 6, , 7]);
                         return [4 /*yield*/, database_1.default.connect()];
                     case 1:
-                        conn = _a.sent();
-                        sql = "SELECT ".concat(this.info, " FROM ").concat(this.table, " WHERE category=$1");
-                        return [4 /*yield*/, conn.query(sql, [category])];
+                        conn = _b.sent();
+                        condition = "AND o.status=$2";
+                        if (!status)
+                            condition = '';
+                        sql = "SELECT ".concat(this.joinedInfo, " FROM ").concat(this.joinedTables, " WHERE o.user_id=$1 ").concat(condition);
+                        result = void 0;
+                        if (!status) return [3 /*break*/, 3];
+                        return [4 /*yield*/, conn.query(sql, [user_id, status])];
                     case 2:
-                        result = _a.sent();
+                        _a = (result = _b.sent());
+                        return [3 /*break*/, 5];
+                    case 3: return [4 /*yield*/, conn.query(sql, [user_id])];
+                    case 4:
+                        _a = (result = _b.sent());
+                        _b.label = 5;
+                    case 5:
+                        _a;
                         conn.release();
-                        return [2 /*return*/, result.rows.length ? result.rows[0] : null];
-                    case 3:
-                        error_4 = _a.sent();
-                        throw new Error("Unable to retrieve Products of ".concat(category, " : ").concat(error_4.message));
-                    case 4: return [2 /*return*/];
+                        return [2 /*return*/, result.rows.length ? result.rows : null];
+                    case 6:
+                        error_4 = _b.sent();
+                        throw new Error("Unable to retrieve Orders of ".concat(user_id, " : ").concat(error_4.message));
+                    case 7: return [2 /*return*/];
                 }
             });
         });
     };
-    //update Product
-    ProductModel.prototype.updateProduct = function (id, p) {
+    //update Order
+    OrderModel.prototype.updateOrderStatus = function (id, o) {
         return __awaiter(this, void 0, void 0, function () {
             var conn, sql, result, error_5;
             return __generator(this, function (_a) {
@@ -162,22 +177,22 @@ var ProductModel = /** @class */ (function () {
                         return [4 /*yield*/, database_1.default.connect()];
                     case 1:
                         conn = _a.sent();
-                        sql = "UPDATE ".concat(this.table, " SET name=$1, price=$2, category=$3, description=$4\n          WHERE id=$5\n          RETURNING ").concat(this.info);
-                        return [4 /*yield*/, conn.query(sql, [p.name, p.price, p.category, p.description, id])];
+                        sql = "UPDATE ".concat(this.table, " SET status=$1 WHERE id=$2 RETURNING ").concat(this.info);
+                        return [4 /*yield*/, conn.query(sql, [o.status, id])];
                     case 2:
                         result = _a.sent();
                         conn.release();
                         return [2 /*return*/, result.rows[0]];
                     case 3:
                         error_5 = _a.sent();
-                        throw new Error("Can Not UPDATE Product ".concat(p.id, " : ").concat(error_5.message));
+                        throw new Error("Can Not UPDATE status of Order ".concat(o.id, " : ").concat(error_5.message));
                     case 4: return [2 /*return*/];
                 }
             });
         });
     };
-    //delete Product
-    ProductModel.prototype.deleteProduct = function (id) {
+    //delete Order
+    OrderModel.prototype.deleteOrder = function (id) {
         return __awaiter(this, void 0, void 0, function () {
             var conn, sql, result, error_6;
             return __generator(this, function (_a) {
@@ -195,12 +210,12 @@ var ProductModel = /** @class */ (function () {
                         return [2 /*return*/, result.rows[0]];
                     case 3:
                         error_6 = _a.sent();
-                        throw new Error("Can Not DELETE Product ".concat(id, " : ").concat(error_6.message));
+                        throw new Error("Can Not DELETE Order ".concat(id, " : ").concat(error_6.message));
                     case 4: return [2 /*return*/];
                 }
             });
         });
     };
-    return ProductModel;
+    return OrderModel;
 }());
-exports.default = ProductModel;
+exports.default = OrderModel;

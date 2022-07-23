@@ -52,12 +52,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var supertest_1 = __importDefault(require("supertest"));
 var database_1 = __importDefault(require("../../database"));
-var user_model_1 = __importDefault(require("../../models/user.model"));
 var index_1 = __importDefault(require("../../index"));
+var product_model_1 = __importDefault(require("../../models/product.model"));
+var user_model_1 = __importDefault(require("../../models/user.model"));
+var order_model_1 = __importDefault(require("../../models/order.model"));
+var orderProduct_model_1 = __importDefault(require("../../models/orderProduct.model"));
 var userModel = new user_model_1.default();
+var productModel = new product_model_1.default();
+var orderModel = new order_model_1.default();
+var orderProductModel = new orderProduct_model_1.default();
 var request = (0, supertest_1.default)(index_1.default);
 var token = '';
-describe('User API Endpoints', function () {
+describe('OrderProduct API Endpoints', function () {
     var testUser = {
         email: 'test@test.com',
         user_name: 'testUser',
@@ -65,14 +71,48 @@ describe('User API Endpoints', function () {
         last_name: 'User',
         password: 'test123'
     };
+    var testProduct = {
+        name: 'test name',
+        price: 10.5,
+        category: 'test category',
+        description: 'test description'
+    };
+    var testOrderProduct = {
+        quantity: 4
+    };
+    var testOrder = {
+        status: 'active'
+    };
     beforeAll(function () { return __awaiter(void 0, void 0, void 0, function () {
-        var createdUser;
+        var createdUser, res, createdProduct, createdOrder, createdOrderProduct;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, userModel.create(testUser)];
                 case 1:
                     createdUser = _a.sent();
                     testUser.id = createdUser.id;
+                    return [4 /*yield*/, request.post('/api/users/login').send({
+                            email: testUser.email,
+                            password: testUser.password
+                        })];
+                case 2:
+                    res = _a.sent();
+                    token = res.body.data.token;
+                    return [4 /*yield*/, productModel.create(testProduct)];
+                case 3:
+                    createdProduct = _a.sent();
+                    testProduct.id = createdProduct.id;
+                    testOrder.user_id = createdUser.id;
+                    return [4 /*yield*/, orderModel.create(testOrder)];
+                case 4:
+                    createdOrder = _a.sent();
+                    testOrder.id = createdOrder.id;
+                    testOrderProduct.product_id = createdProduct.id;
+                    testOrderProduct.order_id = createdOrder.id;
+                    return [4 /*yield*/, orderProductModel.create(testOrderProduct)];
+                case 5:
+                    createdOrderProduct = _a.sent();
+                    testOrderProduct.id = createdOrderProduct.id;
                     return [2 /*return*/];
             }
         });
@@ -84,82 +124,49 @@ describe('User API Endpoints', function () {
                 case 0: return [4 /*yield*/, database_1.default.connect()];
                 case 1:
                     connection = _a.sent();
-                    sql = 'DELETE FROM users;';
-                    return [4 /*yield*/, connection.query(sql)];
+                    sql = 'DELETE FROM orders; DELETE FROM users; DELETE FROM products; DELETE FROM order_product;';
+                    // const sql2 = 'DELETE FROM products;'
+                    return [4 /*yield*/, connection.query(sql)
+                        // await connection.query(sql2)
+                    ];
                 case 2:
+                    // const sql2 = 'DELETE FROM products;'
                     _a.sent();
+                    // await connection.query(sql2)
                     connection.release();
                     return [2 /*return*/];
             }
         });
     }); });
-    describe('Test login method', function () {
-        it('user should be able to login to get token', function () { return __awaiter(void 0, void 0, void 0, function () {
-            var res, _a, id, userToken;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0: return [4 /*yield*/, request.post('/api/users/login').send({
-                            email: testUser.email,
-                            password: testUser.password
-                        })];
-                    case 1:
-                        res = _b.sent();
-                        expect(res.status).toBe(200);
-                        _a = res.body.data, id = _a.id, userToken = _a.token;
-                        expect(id).toBe(testUser.id);
-                        token = userToken;
-                        return [2 /*return*/];
-                }
-            });
-        }); });
-        it('user should not be failed to login with wrong email', function () { return __awaiter(void 0, void 0, void 0, function () {
-            var res;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, request.post('/api/users/login').send({
-                            email: 'wrong@email.com',
-                            password: 'test123'
-                        })];
-                    case 1:
-                        res = _a.sent();
-                        expect(res.status).toBe(401);
-                        return [2 /*return*/];
-                }
-            });
-        }); });
-    });
     describe('Test CRUD API methods', function () {
-        it('should create new user', function () { return __awaiter(void 0, void 0, void 0, function () {
-            var res, _a, email, user_name, first_name, last_name;
+        it('should create new orderProduct', function () { return __awaiter(void 0, void 0, void 0, function () {
+            var res, _a, product_id, quantity, order_id;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0: return [4 /*yield*/, request
-                            .post('/api/users/')
+                            .post('/api/orderProduct/')
                             .set('Authorization', "Bearer ".concat(token))
                             .send({
-                            email: 'test2@test2.com',
-                            user_name: 'testUser2',
-                            first_name: 'Test2',
-                            last_name: 'User2',
-                            password: 'test123'
+                            product_id: testProduct.id,
+                            quantity: 4,
+                            order_id: testOrder.id
                         })];
                     case 1:
                         res = _b.sent();
                         expect(res.status).toBe(200);
-                        _a = res.body.data, email = _a.email, user_name = _a.user_name, first_name = _a.first_name, last_name = _a.last_name;
-                        expect(email).toBe('test2@test2.com');
-                        expect(user_name).toBe('testUser2');
-                        expect(first_name).toBe('Test2');
-                        expect(last_name).toBe('User2');
+                        _a = res.body.data, product_id = _a.product_id, quantity = _a.quantity, order_id = _a.order_id;
+                        expect(product_id).toBe(testProduct.id);
+                        expect(quantity).toBe(4);
+                        expect(order_id).toBe(testOrder.id);
                         return [2 /*return*/];
                 }
             });
         }); });
-        it('should get list all users', function () { return __awaiter(void 0, void 0, void 0, function () {
+        it('should get list all orderProduct', function () { return __awaiter(void 0, void 0, void 0, function () {
             var res;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, request.get('/api/users/').set('Authorization', "Bearer ".concat(token))];
+                    case 0: return [4 /*yield*/, request.get('/api/orderProduct/').set('Authorization', "Bearer ".concat(token))];
                     case 1:
                         res = _a.sent();
                         expect(res.status).toBe(200);
@@ -168,55 +175,52 @@ describe('User API Endpoints', function () {
                 }
             });
         }); });
-        it('should get user info with :id', function () { return __awaiter(void 0, void 0, void 0, function () {
+        it('should get orderProduct info with :id', function () { return __awaiter(void 0, void 0, void 0, function () {
             var res;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, request
-                            .get("/api/users/".concat(testUser.id))
+                            .get("/api/orderProduct/".concat(testOrderProduct.id))
                             .set('Authorization', "Bearer ".concat(token))];
                     case 1:
                         res = _a.sent();
                         expect(res.status).toBe(200);
-                        expect(res.body.data.user_name).toBe(testUser.user_name);
-                        expect(res.body.data.email).toBe(testUser.email);
-                        expect(res.body.data.id).toBe(testUser.id);
+                        expect(res.body.data.product_id).toBe(testOrderProduct.product_id);
+                        expect(res.body.data.quantity).toBe(4);
+                        expect(res.body.data.order_id).toBe(testOrderProduct.order_id);
                         return [2 /*return*/];
                 }
             });
         }); });
-        it('should update user info', function () { return __awaiter(void 0, void 0, void 0, function () {
-            var res, _a, id, email, user_name, first_name, last_name;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0: return [4 /*yield*/, request
-                            .patch("/api/users/".concat(testUser.id))
-                            .set('Authorization', "Bearer ".concat(token))
-                            .send(__assign(__assign({}, testUser), { user_name: 'testUser updated', first_name: 'test Updated', last_name: 'user Updated' }))];
+        it('should update OrderProduct info', function () { return __awaiter(void 0, void 0, void 0, function () {
+            var res;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        console.log('🚀 ~ file: orderProductSpec.ts ~ line 121 ~ it ~ testOrderProduct.id', testOrderProduct);
+                        return [4 /*yield*/, request
+                                .patch("/api/orderProduct/".concat(testOrderProduct.id))
+                                .set('Authorization', "Bearer ".concat(token))
+                                .send(__assign(__assign({}, testOrderProduct), { quantity: 9 }))];
                     case 1:
-                        res = _b.sent();
+                        res = _a.sent();
                         expect(res.status).toBe(200);
-                        _a = res.body.data, id = _a.id, email = _a.email, user_name = _a.user_name, first_name = _a.first_name, last_name = _a.last_name;
-                        expect(id).toBe(testUser.id);
-                        expect(email).toBe(testUser.email);
-                        expect(user_name).toBe('testUser updated');
-                        expect(first_name).toBe('test Updated');
-                        expect(last_name).toBe('user Updated');
+                        expect(res.body.data.quantity).toBe(9);
                         return [2 /*return*/];
                 }
             });
         }); });
-        it('should delete user', function () { return __awaiter(void 0, void 0, void 0, function () {
+        it('should delete orderProduct', function () { return __awaiter(void 0, void 0, void 0, function () {
             var res;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, request
-                            .delete("/api/users/".concat(testUser.id))
+                            .delete("/api/orderProduct/".concat(testOrderProduct.id))
                             .set('Authorization', "Bearer ".concat(token))];
                     case 1:
                         res = _a.sent();
                         expect(res.status).toBe(200);
-                        expect(res.body.data.id).toBe(testUser.id);
+                        expect(res.body.data.id).toBe(testOrderProduct.id);
                         return [2 /*return*/];
                 }
             });

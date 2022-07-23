@@ -7,7 +7,6 @@ const orderProductRoutes = Router()
 orderProductRoutes.post('/', auth, controllers.createOrderProduct)
 orderProductRoutes.get('/', auth, controllers.getAllOrderProducts)
 orderProductRoutes.get('/:id', auth, controllers.getOrderProduct)
-// orderProductRoutes.get('/users/:id', auth, controllers.getOrderProductOfUser)
 orderProductRoutes.patch('/:id', auth, controllers.updateOrderProductQuantity)
 orderProductRoutes.delete('/:id', auth, controllers.deleteOrderProduct)
 export default orderProductRoutes
