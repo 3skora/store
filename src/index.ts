@@ -4,7 +4,6 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import errorMiddleware from './middleware/error.middleware'
 import config from './config'
-import db from './database'
 import routes from './routes'
 
 const PORT = config.port
@@ -33,13 +32,13 @@ app.use(limiter)
 
 app.use('/api', routes)
 // add routing for / path
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.json({
     message: 'Hello World'
   })
 })
 
-app.get('/err', (req: Request, res: Response) => {
+app.get('/err', (_req: Request, res: Response) => {
   throw new Error('hhhhhhhhh')
   // res.json({
   //   message: 'Hello World'

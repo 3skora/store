@@ -78,7 +78,9 @@ describe('User API Endpoints', () => {
     })
 
     it('should get user info with :id', async () => {
-      const res = await request.get(`/api/users/${testUser.id}`).set('Authorization', `Bearer ${token}`)
+      const res = await request
+        .get(`/api/users/${testUser.id}`)
+        .set('Authorization', `Bearer ${token}`)
       expect(res.status).toBe(200)
       expect(res.body.data.user_name).toBe(testUser.user_name)
       expect(res.body.data.email).toBe(testUser.email)
