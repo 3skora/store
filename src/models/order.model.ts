@@ -3,10 +3,16 @@ import Order from '../types/order.type'
 
 class OrderModel {
   private table: string
+  private joinedTables: string
   private info: string
+  private orderProductInfo: string
+  private joinedInfo: string
   constructor() {
     this.table = 'orders'
     this.info = 'id,user_id,status'
+    this.orderProductInfo = 'product_id,quantity'
+    this.joinedTables = 'orders o INNER JOIN order_product op ON o.id = op.order_id'
+    this.joinedInfo = `o.id,user_id,status,${this.orderProductInfo}`
   }
 
   //create Order
@@ -35,7 +41,8 @@ class OrderModel {
   async getAll(): Promise<Order[]> {
     try {
       const conn = await db.connect()
-      const sql = `SELECT ${this.info} FROM ${this.table}`
+      const sql = `SELECT ${this.joinedInfo} FROM ${this.joinedTables}`
+      console.log('🚀 ~ file: order.model.ts ~ line 45 ~ OrderModel ~ getAll ~ sql', sql)
       const result = await conn.query(sql)
       conn.release()
       return result.rows
@@ -45,28 +52,32 @@ class OrderModel {
   }
 
   //get specific Order
-  async getOrder(id: string): Promise<Order | null> {
+  async getOrder(id: string): Promise<Order[] | null> {
     try {
       const conn = await db.connect()
-      const sql = `SELECT ${this.info} FROM ${this.table} WHERE id=$1`
+      const sql = `SELECT ${this.joinedInfo} FROM ${this.joinedTables} WHERE o.id=$1`
       const result = await conn.query(sql, [id])
       conn.release()
-      return result.rows.length ? result.rows[0] : null
+      return result.rows.length ? result.rows : null
     } catch (error) {
       throw new Error(`Unable to retrieve Order ${id} : ${(error as Error).message}`)
     }
   }
 
   //get all orders of a user and filter by status option
-  async getOrdersOfUser(user_id: string, status?: string): Promise<Order | null> {
+  async getOrdersOfUser(user_id: string, status?: string): Promise<Order[] | null> {
     try {
       const conn = await db.connect()
-      let condition = `AND status=${status}`
+      let condition = `AND o.status=$2`
       if (!status) condition = ''
-      const sql = `SELECT ${this.info} FROM ${this.table} WHERE user_id=$1 ${condition}`
-      const result = await conn.query(sql, [user_id])
+      const sql = `SELECT ${this.joinedInfo} FROM ${this.joinedTables} WHERE o.user_id=$1 ${condition}`
+      let result
+      status
+        ? (result = await conn.query(sql, [user_id, status]))
+        : (result = await conn.query(sql, [user_id]))
+
       conn.release()
-      return result.rows.length ? result.rows[0] : null
+      return result.rows.length ? result.rows : null
     } catch (error) {
       throw new Error(`Unable to retrieve Orders of ${user_id} : ${(error as Error).message}`)
     }
